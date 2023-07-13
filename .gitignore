@@ -1,0 +1,24 @@
+# development
+.vscode
+.isort.cfg
+*.sh
+
+# standard
+**/*__pycache__/*
+**/.DS_Store
+.ipynb_checkpoints
+
+# ignore all large data files - these can be generated
+data/processed/
+data/raw/
+**/*.cache
+
+
+# don't include bulky training outputs
+**/runs/*
+**/*log*
+logs/
+
+# other things to not commit
+src/validation/lammps/lmp
+potentials/

@@ -1,0 +1,72 @@
+variable warm_steps equal ${warm}*1000
+variable anneal_steps equal ${anneal}*1000
+
+print "Warm  : ${warm_steps}fs"
+print "Anneal: ${anneal_steps}fs"
+
+# set logging to append to log.dat
+log ${logfile} append
+
+# read in data using appropriate units
+units metal # mass = g/mole, distance = Å, time = ps, energy = eV, force = eV/Å
+atom_style atomic
+newton off
+
+read_data ${structure}
+mass * 12.011  # all atoms are Carbon and therefore have mass ~12
+
+# settings for potential to use for simulation
+pair_style ${pair_style}
+pair_coeff * * ${pot_file} C
+
+# settings for simulation
+neigh_modify every 1 delay 0 check yes # rebuild neighb. lists after every step
+timestep ${timestep_ps}  # i.e. 1fs timesteps
+
+variable Nfreq equal 100
+variable Nevery equal 100
+variable Nrepeat equal ${Nfreq}/${Nevery}
+variable Ndump equal 200 # every 0.2 ps
+variable nAtoms equal atoms
+
+
+# what should be updated while simulating?
+
+# ensure that the average momentum is 0 at every timestep
+fix removeMomentum all momentum 1 linear 1 1 1 angular
+
+# compute the temperature
+compute T all temp
+fix TempAve all ave/time ${Nevery} ${Nrepeat} ${Nfreq} c_T
+
+variable P equal press
+fix PressAve all ave/time ${Nevery} ${Nrepeat} ${Nfreq} v_P
+
+variable v equal vol
+fix vAve all ave/time ${Nevery} ${Nrepeat} ${Nfreq} v_v
+
+compute PE all pe pair
+variable PE_Atom equal c_PE/v_nAtoms
+fix PEAve_Atom all ave/time ${Nevery} ${Nrepeat} ${Nfreq} v_PE_Atom
+
+compute MSD all msd
+
+# decide what to print
+thermo_style custom step cpu temp f_TempAve press f_PressAve f_PEAve_Atom vol f_vAve c_MSD[4]
+
+# ensure that printing is flushed (i.e. displays while running)
+thermo_modify flush yes
+thermo ${Nfreq}
+
+dump traj all custom ${Ndump} ${dump_dir}/dump.*.dat element id xu yu zu vx vy vz fx fy fz
+
+velocity all create ${start_T} ${rand_seed}
+run 0
+
+fix integrate all nvt temp ${start_T} ${anneal_T} 0.1
+run ${warm_steps} 
+unfix integrate
+
+fix integrate all nvt temp ${anneal_T} ${anneal_T} 0.1
+run ${anneal_steps} 
+unfix integrate

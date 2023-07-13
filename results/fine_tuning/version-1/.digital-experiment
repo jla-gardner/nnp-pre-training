@@ -1,0 +1,48 @@
+"backend_name": |-
+  csv
+"code": |
+  @experiment(backend="csv", verbose=True, root="../results/fine_tuning", cache=True)
+  def fine_tuning(
+      # pretrained model
+      pretrain_id: str,
+      checkpoint: Union[str, int] = "best",
+      # dataset parameters
+      n_finetune=100,
+      finetune_dataset="C-GAP-17",
+      finetune_labels="dft",
+      # model parameters
+      r_max=4.0,
+      num_layers=4,
+      num_features=32,
+      l_max=1,
+      # training parameters
+      seed=42,
+      beta=4,
+      ema_decay=0.99,
+      batch_size=10,
+  ):
+      # collect all the kwargs in a dict
+      kwargs = locals()
+      checkpoint = get_ckpt_file(pretrain_id, checkpoint)
+
+      # fine tune the model
+      run_dir = current_directory()
+      data.ensure_dataset_exists(finetune_dataset, finetune_labels)
+
+      # run the training
+      config = convert_to_direct_training_kwargs(kwargs, "finetune")
+      nequip_config = nequip_access.fill_with_defaults(config, run_dir)
+
+      with timing.time_block("training"):
+          trainig_results = nequip_access.fine_tune_model(nequip_config, checkpoint)
+
+      # evaluate the model
+      with timing.time_block("evaluation"):
+          performance_metrics = evaluate_model(
+              run_dir, finetune_dataset, finetune_labels, n_finetune
+          )
+
+      return {
+          **performance_metrics,
+          **trainig_results,
+      }

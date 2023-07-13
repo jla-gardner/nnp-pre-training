@@ -1,0 +1,52 @@
+default_dtype: float32
+append: true
+
+# network
+nonlinearity_type: gate
+BesselBasis_trainable: true
+parity: true
+
+# database
+ase_args:
+    format: extxyz
+
+train_val_split: sequential # we pre-shuffle the dataset. to make testing easier, we use sequential split
+shuffle: true
+
+dataset: ase
+validation_dataset: ase
+
+# logging
+wandb: false
+
+# training
+validation_batch_size: 20
+max_epochs: 300
+metrics_key: validation_f_rmse
+save_checkpoint_freq: 10
+
+# if validation_f_rmse does not improve for 25 epochs, stop training
+early_stopping_patiences:
+    validation_f_rmse: 40
+early_stopping_delta:
+    validation_f_rmse: 0.005
+early_stopping_cumulative_delta: true
+
+# optimizer
+optimizer_name: Adam
+use_ema: true
+
+# --------------------------------------------
+# we want the model's scaling and shifting of forces and energies
+# to be independent of the dataset we are training/finetuning on!
+# therefore we override the defaults here. We found that this
+# leads to no discernible difference in performance when direct
+# training, and means that the finetuned model starts out making
+# sensible predictions straight away
+
+per_species_rescale_shifts: 0.0
+per_species_rescale_scales: 1.0
+
+# don't do any other scaling or shifting
+global_rescale_shift: null
+global_rescale_scale: null

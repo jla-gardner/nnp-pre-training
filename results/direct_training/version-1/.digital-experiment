@@ -1,0 +1,57 @@
+"backend_name": |-
+  csv
+"code": |
+  @experiment(backend="csv", verbose=True, root="../results/direct_training", cache=True)
+  def direct_training(
+      # dataset parameters
+      n_train=100,
+      dataset_name="C-GAP-17",
+      labels="dft",
+      # model parameters
+      r_max=4.0,
+      num_layers=4,
+      num_features=32,
+      l_max=1,
+      # training parameters
+      seed=42,
+      beta=4,
+      ema_decay=0.99,
+      batch_size=10,
+  ):
+      """
+      Train a NequIP model to mimic the `labels` on the `dataset_name` dataset.
+      Returns the evaluation metrics for the trained model on the train,
+      val and test sets.
+
+      As a result of the `@experiment` decorator, all results of this function
+      are saved to disk, and can be accessed later.
+
+      To run this as a standalone script, from the directory root, run e.g.:
+          ./run direct_train n_train=1_000 num_features=16
+      """
+
+      # collect all the kwargs in a dict
+      config = locals()
+
+      # use the provided current_directory as the root to store training logs etc.
+      running_directory = current_directory()
+
+      # ensure the dataset files exist, and label it if required
+      data.ensure_dataset_exists(dataset_name, labels)
+
+      # run the training
+      nequip_config = nequip_access.fill_with_defaults(config, running_directory)
+
+      with timing.time_block("training"):
+          training_results = nequip_access.train_model(nequip_config)
+
+      # evaluate the model
+      with timing.time_block("evaluation"):
+          performance_metrics = evaluate_model(
+              running_directory, dataset_name, labels, n_train
+          )
+
+      return {
+          **training_results,
+          **performance_metrics,
+      }

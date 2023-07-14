@@ -5,8 +5,8 @@ Code, data and model weights for the pre-print:
 
 <div align="center">
 
-> **[Synthetic pre-training for neural-networkinteratomic potentials]()**\
-> _[John Gardner](https://jla-gardner.github.io), [Kathryn Baker]() and [Volker Deringer](http://deringer.chem.ox.ac.uk)_
+> **[Synthetic pre-training for neural-network interatomic potentials]()**\
+> _[John L. A. Gardner](https://jla-gardner.github.io), [Kathryn T. Baker]() and [Volker L. Deringer](http://deringer.chem.ox.ac.uk)_
 
 </div>
 

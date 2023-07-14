@@ -1,7 +1,7 @@
 # nnp-pre-training
 
 
-Code, data and model weights for the paper:
+Code, data and model weights for the pre-print:
 
 <div align="center">
 

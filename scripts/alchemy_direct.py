@@ -4,7 +4,7 @@ N_TRAINS = [25, 50, 100, 200, 400, 800, 1_600]
 
 
 def run():
-    for seed in (1, 2, 42):
+    for seed in (1, 2, 3, 4, 42):
         for n_train in N_TRAINS:
             direct_training(
                 n_train=n_train,

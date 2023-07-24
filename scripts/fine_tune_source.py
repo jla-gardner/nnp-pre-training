@@ -7,7 +7,7 @@ pre_train_labels = ["ace", "gap20", "edip", "lcbop"]
 
 
 def run():
-    for seed in (1, 2, 42):
+    for seed in (1, 2, 3, 4, 42):
         for label in pre_train_labels:
             pretrain_config = {
                 "n_train": n_pretrain,

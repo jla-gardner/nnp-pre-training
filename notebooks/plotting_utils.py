@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.colors import LinearSegmentedColormap
 
 colours = {
     "dft": "black",
@@ -43,3 +45,10 @@ def log_log(ax=None, yticks=None, xticks=None, dp=1):
     ax.set_yticks(yticks, yticks)
     ax.set_xticks(xticks, xticks)
     ax.minorticks_off()
+
+
+def colour_gradient(things, colour):
+    cmap = LinearSegmentedColormap.from_list("mycmap", ["white", colour])
+    gradient = cmap(np.linspace(0.2, 1, len(things)))
+
+    return zip(things, gradient)

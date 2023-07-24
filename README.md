@@ -6,7 +6,7 @@ Code, data and model weights for the pre-print:
 <div align="center">
 
 > **[Synthetic pre-training for neural-network interatomic potentials]()**\
-> _[John L. A. Gardner](https://jla-gardner.github.io), [Kathryn T. Baker]() and [Volker L. Deringer](http://deringer.chem.ox.ac.uk)_
+> _[John L. A. Gardner](https://jla-gardner.github.io), [Kathryn T. Baker](https://www.linkedin.com/in/katbaker27) and [Volker L. Deringer](http://deringer.chem.ox.ac.uk)_
 
 </div>
 
@@ -17,7 +17,7 @@ Code, data and model weights for the pre-print:
 -  **[src/](src/)** contains the source code for performing synthetic pre-training.
 -  **[scripts/](scripts/)** contains the scripts used to run the experiments presented in the paper.
 -  **[notebooks/](./plotting/analysis.ipynb)** contains the notebooks to generate the plots in the paper.
--  **[data/labels](data/labels)** contains the synthetic labels generated as part of this work.
+-  **[data/labels](data/labels)** contains the synthetic labels generated as part of this work. 
 -  **[figures/](figures/)** contains the figures used in the paper.
 -  **[results/](results/)** contains the results of the experiments presented in the paper. See notebooks for how to interpret these.
 -  **[models/](models/)** contains the model weights for the pre-trained models used in the paper. See below for how to load these. 
@@ -92,3 +92,4 @@ initial_model_state: <path-to-model>
 
 The models are named according to the following convention:
 `<synthetic-label-source>-<number-of-pre-training-structures>`
+

@@ -25,7 +25,7 @@ def run():
         assert len(pretrain_results) == 1
         pretrain_id = pretrain_results.iloc[0].id
 
-        for seed, n_train in product((1, 2, 42), N_TRAINS):
+        for seed, n_train in product((1, 2, 3, 4, 42), N_TRAINS):
             fine_tuning(
                 pretrain_id=pretrain_id,
                 n_finetune=n_train,

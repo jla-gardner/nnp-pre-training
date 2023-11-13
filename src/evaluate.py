@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Callable, Dict, Union
 
@@ -75,7 +77,9 @@ def evaluate_model(
     if n_train is None:
         n_train = 10  # default to the first 10 structures
     else:
-        n_train = min(1_000, n_train)  # limit to 1000 structures as this is expensive!
+        n_train = min(
+            1_000, n_train
+        )  # limit to 1000 structures as this is expensive!
 
     # first, we deploy the model
     model_path = deploy(directory, model_name)
@@ -98,43 +102,51 @@ def evaluate_model(
     }
 
 
+def get_model(
+    x: Union[str, Path],
+    checkpoint_name: str = "best_model.pth",
+) -> NequIPCalculator:
+    # if model is a string (i.e. id), we work out where it's folder is
+    if isinstance(x, str):
+        root_dir = Path(__file__).parent.parent / "results"
+        matches = list(root_dir.glob(f"**/runs/{x}"))
+        if len(matches) == 0:
+            raise ValueError(f"Model {x} not found")
+        elif len(matches) > 1:
+            raise ValueError(f"Model {x} found in multiple places")
+        else:
+            directory = matches[0]
+    else:
+        directory = x
+
+    model_path = deploy(directory, checkpoint_name)
+    return NequIPCalculator.from_deployed_model(model_path)
+
+
 @persist
 def get_model_predictions(
-    model: Union[str, Path], structures: ase.Atoms, model_name: str = "best_model.pth"
+    model: Union[str, Path],
+    structures: list[ase.Atoms],
+    model_name: str = "best_model.pth",
 ):
     """
     Get the predictions of a model on a set of structures.
     """
 
-    # if model is a string (i.e. id), we work out where it's folder is
-    if isinstance(model, str):
-        root_dir = Path(__file__).parent.parent / "results"
-        matches = list(root_dir.glob(f"**/runs/{model}"))
-        if len(matches) == 0:
-            raise ValueError(f"Model {model} not found")
-        elif len(matches) > 1:
-            raise ValueError(f"Model {model} found in multiple places")
-        else:
-            directory = matches[0]
-    else:
-        directory = model
-
-    # first, we get the deployed model
-    model_path = deploy(directory, model_name)
-    model = NequIPCalculator.from_deployed_model(model_path)
+    nequip = get_model(model, model_name)
 
     # then we make predictions
     predictions = []
     print(f"Getting predictions for {len(structures)} structures...")
     for _, structure in verbose_enumerate(structures):
-        model.calculate(structure, ["energy", "forces"])
-        predictions.append(model.results)
+        nequip.calculate(structure, ["energy", "forces"])
+        predictions.append(nequip.results)
 
     return predictions
 
 
 def evaluate(
-    model: NequIPCalculator, structures: ase.Atoms, label: str
+    model: NequIPCalculator, structures: list[ase.Atoms], label: str
 ) -> Dict[str, float]:
     if is_debug():
         structures = structures[:10]

@@ -79,7 +79,10 @@ def dft(structures):
 
     for atoms in structures:
         energies.append(atoms.info["energy"] - e0 * len(atoms))
-        forces.append(atoms.arrays["force"])
+        if "force" in atoms.arrays:
+            forces.append(atoms.arrays["force"])
+        else:
+            forces.append(atoms.arrays["forces"])
     return energies, forces
 
 
@@ -140,7 +143,9 @@ def calculate_labels(calculator, structures):
 
     reference_energy = calculator.get_potential_energy(lone_atom(structures))
 
-    for structure in verbose_iterate(structures, description="Calculating labels:"):
+    for structure in verbose_iterate(
+        structures, description="Calculating labels:"
+    ):
         print(structures.index(structure))
         e = calculator.get_potential_energy(structure)
         e = e - reference_energy * len(structure)

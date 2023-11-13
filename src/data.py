@@ -13,7 +13,6 @@ Labels are in:
     `data/labels/[dataset_name]/[label_type].npz`
 """
 
-import itertools
 import math
 from functools import partial
 from pathlib import Path
@@ -27,7 +26,6 @@ from load_atoms import dataset as load_dataset
 from locache import persist
 
 from src.label import LABELLERS
-from src.util import list_split
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 ALL_DATASETS: Dict[str, Callable[[], Sequence[ase.Atoms]]] = {}
@@ -127,6 +125,74 @@ def reasonable():
     return [s for s in structures if s.info["time"] >= 10]
 
 
+@register_dataset(name="C-SYNTH-23M:sp2")
+def sp2():
+    reasonable_synth = get_structures_for("C-SYNTH-23M:reasonable")
+    return [
+        structure
+        for structure in reasonable_synth
+        if 2.0 <= structure.info["density"] < 2.5
+    ]
+
+
+@register_dataset(name="C-SYNTH-23M:sp3")
+def sp3():
+    reasonable_synth = get_structures_for("C-SYNTH-23M:reasonable")
+    return [
+        structure
+        for structure in reasonable_synth
+        if 3.0 < structure.info["density"] <= 3.5
+    ]
+
+
+@register_dataset(name="P-GAP-20:scaled-to-C")
+def p_gap_20():
+    structures = load_dataset("P-GAP-20", root=DATA_DIR / "raw")
+    # scale each of the structures by 1.52
+    for s in structures:
+        s.cell /= 1.52
+        s.positions /= 1.52
+    # transmute to C
+    for s in structures:
+        s.symbols = "C" * len(s)
+    # hack energies to be the same as C
+    per_atom_energy = np.array(
+        [structure.info["energy"] / len(structure) for structure in structures]
+    )
+    e0 = np.mean(per_atom_energy)
+    for s in structures:
+        # subtract mean
+        s.info["energy"] = s.info["energy"] - e0 * len(s)
+        # add mean of carbon so that they have the ~same energy means
+        s.info["energy"] += -158 * len(s)
+    # filter questionable labels (5 in total) and dimers
+    structures = [
+        s for s in structures if s.info["energy"] < -8 and len(s) > 2
+    ]
+    return [s for s in structures if not has_isolated_atom(s, 4 * 1.52)]
+
+
+@register_dataset(name="Si-GAP-18:scaled-to-C")
+def si_gap_scaled():
+    structures = load_dataset("Si-GAP-18", root=DATA_DIR / "raw")
+    # scale each of the structures by 1.52
+    for s in structures:
+        s.cell /= 1.61
+        s.positions /= 1.61
+    # transmute to C
+    for s in structures:
+        s.symbols = "C" * len(s)
+    # hack energies to be the same as C
+    per_atom_energy = np.array(
+        [structure.info["energy"] / len(structure) for structure in structures]
+    )
+    e0 = -158.55 + 148.31 - 5
+    for s in structures:
+        s.info["energy"] = s.info["energy"] - e0 * len(s)
+
+    return [s for s in structures if not has_isolated_atom(s, 4 * 1.61)]
+
+
 def get_file_path(dataset: str, labels: str, split: str) -> Path:
     """Get the path to a file."""
     filename = f"{split}.extxyz"
@@ -144,7 +210,9 @@ def additional_config(dataset_name: str, labels: str):
 
     return dict(
         dataset_file_name=str(train_structures),
-        validation_dataset_file_name=str(get_file_path(dataset_name, labels, "val")),
+        validation_dataset_file_name=str(
+            get_file_path(dataset_name, labels, "val")
+        ),
         n_val=get_n_val_for(dataset_name),
         key_mapping={
             f"{labels}_energy": "total_energy",
@@ -178,7 +246,8 @@ def clean_structures(structures: Sequence[ase.Atoms], to_keep_prefix: str):
         s.arrays = {
             key: value
             for key, value in s.arrays.items()
-            if key.startswith(to_keep_prefix) or key in ["positions", "numbers"]
+            if key.startswith(to_keep_prefix)
+            or key in ["positions", "numbers"]
         }
 
 
@@ -194,7 +263,9 @@ def create_dataset(dataset_name: str, labels: str):
     # get the labels
     energies, forces = labels_for_(dataset_name, labels)
     if energies is None:
-        energies, forces = generate_labels_for(dataset_name, labels, structures)
+        energies, forces = generate_labels_for(
+            dataset_name, labels, structures
+        )
 
     forces = np.array(forces, dtype=object)
     energies = np.array(energies)
@@ -203,7 +274,9 @@ def create_dataset(dataset_name: str, labels: str):
     # add labels to structures
     for i, structure in enumerate(structures):
         structure.info[f"{labels}_energy"] = float(energies[i])
-        structure.arrays[f"{labels}_force"] = np.array(forces[i], dtype=np.float32)
+        structure.arrays[f"{labels}_force"] = np.array(
+            forces[i], dtype=np.float32
+        )
 
     train, val, test = train_test_split(structures)
 
@@ -281,7 +354,9 @@ def labels_for_(dataset_name: str, labels: str):
     label_dir = DATA_DIR / "labels" / dataset_name
     # label files are of the format <labels>-<i>.npz
     possible_labels = list(label_dir.glob(f"{labels}*.npz"))
-    sorted_labels = sorted(possible_labels, key=lambda p: int(p.stem.split("-")[-1]))
+    sorted_labels = sorted(
+        possible_labels, key=lambda p: int(p.stem.split("-")[-1])
+    )
 
     if len(sorted_labels) == 0:
         return None, None
@@ -314,7 +389,9 @@ def _get_n_val(training_structures: Sequence[ase.Atoms]):
 def transmute_dataset(
     dataset_name: str, labels: str, transmute_to: str, scale_factor: float
 ):
-    new_dataset_name = f"{dataset_name}transmuted:{transmute_to}-{scale_factor}"
+    new_dataset_name = (
+        f"{dataset_name}transmuted:{transmute_to}-{scale_factor}"
+    )
     for split in ["train", "val", "test"]:
         new_path = get_file_path(new_dataset_name, labels, split)
         if new_path.exists():

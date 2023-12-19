@@ -1,12 +1,13 @@
-# nnp-pre-training
+# nnp-pre-training 
 
+[![DOI](https://zenodo.org/badge/665526475.svg)](https://zenodo.org/doi/10.5281/zenodo.10405624)
 
 Code, data and model weights for the pre-print:
 
 <div align="center">
 
 > **[Synthetic pre-training for neural-network interatomic potentials](http://doi.org/10.1088/2632-2153/ad1626)**\
-> _[John L. A. Gardner](https://jla-gardner.github.io), [Kathryn T. Baker](https://www.linkedin.com/in/katbaker27) and [Volker L. Deringer](http://deringer.chem.ox.ac.uk)_
+> _[John L. A. Gardner](https://jla-gardner.github.io), [Kathryn T. Baker](https://www.linkedin.com/in/katbaker27) and [Volker L. Deringer](http://deringer.chem.ox.ac.uk)_\
 
 </div>
 
